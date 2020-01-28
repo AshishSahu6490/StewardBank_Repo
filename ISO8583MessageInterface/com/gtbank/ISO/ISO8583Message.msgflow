@@ -97,7 +97,7 @@
     <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/ISO8583MessageInterface/icons/full/obj16/ISO8583Message.gif"/>
     <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/ISO8583MessageInterface/icons/full/obj30/ISO8583Message.gif"/>
     <composition>
-      <nodes xmi:type="ComIbmTCPIPServerInput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="3,147" connectionDetails="ConfigurableService2002" timeoutWaitingForData="99999" modifyInputStream="reserve" messageDomainProperty="DFDL" messageTypeProperty="{}:IsoLength" validateTiming="immediate" recordDetection="fixedLength" recordLength="2" customDelimiter="0D0A" validateMaster="contentAndValue">
+      <nodes xmi:type="ComIbmTCPIPServerInput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="3,147" connectionDetails="ConfigurableService2002" timeoutWaitingForData="88888" modifyInputStream="reserve" messageDomainProperty="DFDL" messageTypeProperty="{}:IsoLength" validateTiming="immediate" recordDetection="fixedLength" recordLength="2" customDelimiter="0D0A" validateMaster="contentAndValue">
         <translation xmi:type="utility:ConstantString" string="TCPIP Server Input"/>
       </nodes>
       <nodes xmi:type="ComIbmTCPIPServerOutput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_7" location="842,159" connectionDetails="ConfigurableService2002" timeoutSendingData="9999" modifyOutputStream="release" modifyInputStream="release">
