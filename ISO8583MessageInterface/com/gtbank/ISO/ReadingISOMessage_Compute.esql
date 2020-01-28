@@ -1,0 +1,442 @@
+
+
+
+
+
+
+
+
+
+
+BROKER SCHEMA com.gtbank.ISO
+PATH com.gtbank.utils,com.gtbank.logging,com.gtbank.ISO;
+DECLARE init BOOLEAN;
+DECLARE rc BOOLEAN;
+DECLARE LOG4JPATH EXTERNAL CHARACTER '';
+DECLARE LOG4JNAME EXTERNAL CHARACTER '';
+DECLARE INP_DB_LOG EXTERNAL CHARACTER '';
+DECLARE OUT_DB_LOG EXTERNAL CHARACTER '';
+DECLARE HOSTNAME EXTERNAL CHARACTER '';
+DECLARE AUTHENICATEDVALUE EXTERNAL CHARACTER '';
+DECLARE EXPLANATIONCODE EXTERNAL CHARACTER '';
+DECLARE REQUESTCODE EXTERNAL CHARACTER '';
+DECLARE MANAPP1 EXTERNAL CHARACTER '';
+DECLARE TELLERID EXTERNAL CHARACTER '';
+DECLARE DOCUMENTALPHA EXTERNAL CHARACTER '';
+DECLARE ORIGINATORBRANCHCODE EXTERNAL CHARACTER '';
+DECLARE REEMARKS EXTERNAL CHARACTER '';
+DECLARE ESBSCHEMA EXTERNAL CHARACTER '';
+DECLARE ESB_DSN EXTERNAL CHARACTER '';
+DECLARE ATMKeyMapping EXTERNAL CHARACTER '';
+DECLARE BASISSCHEMA EXTERNAL CHARACTER '';
+DECLARE BASIS_DSN EXTERNAL CHARACTER '';
+DECLARE MAPACCT_TABLE EXTERNAL CHARACTER '';
+
+
+CREATE COMPUTE MODULE ReadingISOMessage
+
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL RequestMappingTocallServices();
+		RETURN FALSE;
+	END;
+
+	CREATE PROCEDURE RequestMappingTocallServices() BEGIN
+		CALL initLog4j(LOG4JPATH) INTO init;
+		--SET OutputRoot.Properties = InputRoot.Properties;
+		SET Environment.Properties = InputRoot.Properties;
+		CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' TCPIPServerReceiverID ::'|| COALESCE(InputLocalEnvironment.TCPIP.Receive.ConnectionDetails.Id,'') ) INTO rc;
+		SET Environment.connectionId = InputLocalEnvironment.TCPIP.Receive.ConnectionDetails.Id;
+		DECLARE ReqLength INTEGER Environment.ReqLength;
+		DECLARE ReqLengthblob BLOB ReqLength;
+		DECLARE ReqLengthChar CHARACTER ReqLengthblob;
+		SET ReqLengthChar = REPLACE(ReqLengthChar,'00','');
+		DECLARE ReqMsgLengthblob BLOB CAST(ReqLengthChar AS BLOB);
+		DECLARE RequestMsgData CHARACTER CAST(ASBITSTREAM(InputRoot.DFDL,437) AS CHARACTER CCSID 437);
+		CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' RequestMsgData ::'||COALESCE(RequestMsgData,'') ) INTO rc;
+		CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' ReqMsgLengthblob ::'|| CAST(COALESCE(ReqMsgLengthblob,'') AS CHARACTER)||' ReqLength ::'|| CAST(ReqLength AS CHARACTER) ) INTO rc;
+		CREATE LASTCHILD OF Environment DOMAIN('XMLNSC');
+		SET Environment.XMLNSC = InputRoot.DFDL;
+		/* Logging converting ISO Message To XMLNSC AND logging in RAW_AUDIT_TABLE */
+		SET OutputRoot.Properties.MessageType = NULL;
+		SET Environment.Properties.MessageType = NULL;
+
+		DECLARE envref REFERENCE TO Environment;
+		DECLARE outRef REFERENCE TO OutputRoot;
+		DECLARE InputRef REFERENCE TO InputRoot.DFDL.ISO8583_1987;
+		DECLARE inputChar CHARACTER;
+		IF INP_DB_LOG = 'Y' THEN
+			SET OutputRoot.XMLNSC = Environment.XMLNSC;
+			SET inputChar = CAST(ASBITSTREAM(OutputRoot.XMLNSC) AS CHAR CCSID 1208);
+			SET OutputRoot.XMLNSC = NULL;
+			CALL GenerateRawLogMsg(ApplicationLabel,inputChar,envref.messageId,'ISO8583','Request',outRef);
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'RAW_AUDIT_Q' ;
+			PROPAGATE TO TERMINAL 'out2' ;
+			--CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' RawAuditData::'|| COALESCE(inputChar,'') ) INTO rc;
+		END IF ;
+		----------------Unique Refereancee
+		CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId || ' UniqueReferanceNUM '|| COALESCE(InputRef.RetrievalReferenceNumber_037,'') ) INTO rc;
+		DECLARE atmPosition,bankCode,userid,sourceAcct,BufferC,custName,benName,reservedField CHARACTER;
+		DECLARE Amount DECIMAL;
+		SET Amount = CAST(InputRef.AmountTransaction_004 AS DECIMAL)/100;
+		SET atmPosition = InputRef.ReceivingInstitutionIdentificationCode_100;
+		CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' ISO-004 Amount ::'|| COALESCE(CAST(Amount AS CHARACTER),'')|| ' ISO-100ATMPosition::'|| COALESCE(atmPosition,'') ) INTO rc;
+		/* sourceAccont(userid) Number which is from 102 field */
+		SET userid = InputRef.AccountIdentification1_102;
+		DECLARE bra_code,cus_num,cur_code,led_code,sub_acct_code,productCode,query CHARACTER;
+		SET bra_code = CAST(SUBSTRING(userid from 1 for 3)AS INTEGER);
+		SET cus_num = CAST(SUBSTRING(userid from 4 for 7)AS INTEGER);
+		SET cur_code = CAST(SUBSTRING(userid from 11 for 2)AS INTEGER);
+		SET led_code = CAST(SUBSTRING(userid from 13 for 4)AS INTEGER);
+		SET sub_acct_code = CAST(SUBSTRING(userid from 17 for 2)AS INTEGER);
+		SET sourceAcct = bra_code||'/'||cus_num||'/'||cur_code||'/'||led_code||'/'||sub_acct_code;
+		/*Getting 127 Reserved Fields and its subFields*/
+		SET reservedField = InputRef.ReservedPrivate_127.ReservedPrivate_127_22;
+		DECLARE useridNIP CHARACTER bra_code||cus_num||'01';
+		SET BufferC = SUBSTRING(SUBSTRING(reservedField AFTER '<BufferC>')BEFORE '</BufferC>');
+		SET productCode = SUBSTRING(SUBSTRING(reservedField AFTER '<ProductCode>')BEFORE '</ProductCode>');
+		SET Environment.Amount = Amount;
+		SET Environment.sourceAcct = sourceAcct;
+		SET Environment.BufferC = BufferC;
+		SET Environment.ProductCode = productCode;
+		/*If ISO 100 field is not present then we are taking from 127-22 subfield is CfgReceivingInstitutionIDCode */
+		IF atmPosition IS NULL THEN
+			DECLARE CfgReceivingInstitutionIDCode CHARACTER;
+			SET CfgReceivingInstitutionIDCode = SUBSTRING(SUBSTRING(reservedField AFTER '<CfgReceivingInstitutionIDCode>')BEFORE '</CfgReceivingInstitutionIDCode>');
+			SET Environment.CfgReceivingInstitutionIDCode = CfgReceivingInstitutionIDCode;
+			SET atmPosition = CfgReceivingInstitutionIDCode;
+		END IF;
+		/* Based on atmPosition(ISO100Field) retriving bank codes--ESBDB calling*/
+		SET Environment.Variables.BankData[] = SELECT A.BankShortName,A.BankFullName,A.BankCode FROM Database.{ESB_DSN}.{ESBSCHEMA}.{ATMKeyMapping} AS A WHERE A.ATMPosition = atmPosition;
+		SET bankCode = cast(Environment.Variables.BankData.BankCode as character);
+
+		DECLARE version,messageClass,messageFunction,messageOrigin,MTIType CHARACTER;
+		SET version = InputRef.MTI_Version;
+		SET messageClass = InputRef.MTI_MessageClass;
+		SET messageFunction = InputRef.MTI_MessageFunction;
+		SET messageOrigin = InputRef.MTI_MessageOrigin;
+		SET MTIType = version||messageClass||messageFunction||messageOrigin;
+		SET Environment.MTIType = MTIType;
+		CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId || ' RequestType :' ||COALESCE(MTIType,'') ||' and BankCode ::'|| COALESCE(bankCode,'')|| ' and bankName ::'|| COALESCE(Environment.Variables.BankData.BankShortName,'') ) INTO rc;
+
+
+		DECLARE Db ROW;
+		/* To get Beneficiary Name for AccountValidation&&SDSC Service by passing BufferC DestinationAcc*/
+		IF MTIType = '0100' OR MTIType = '0200' AND bankCode = '058' THEN
+			DECLARE bra_code1,cus_num1,cur_code1,led_code1,sub_acct_code1,query1 CHARACTER;
+			CALL DerivateAccountNumber(BufferC,bra_code1,cus_num1,cur_code1,led_code1,sub_acct_code1);
+			SET query1 = 'select get_name2(?,?,?,?,?) cus_sho_name from dual';
+			SET Db.values = PASSTHRU(query1 TO Database.{BASIS_DSN} VALUES(bra_code1,cus_num1,cur_code1,led_code1,sub_acct_code1));
+			SET Environment.accountName = Db.values.[1];
+			CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId || ' BufferCAcc '|| COALESCE(BufferC,'') || ' AccountName ::'|| COALESCE(envref.accountName,'') ) INTO rc;
+			/* To get CustomerName for NIP Outward Service by passing sourceAccount*/
+		ELSEIF MTIType = '0200' AND bankCode <> '058' THEN
+			SET benName = SUBSTRING(SUBSTRING(reservedField AFTER '<CustomerDescription>')BEFORE '</CustomerDescription>');
+			SET Environment.benName = benName;
+			SET query = 'select get_name2(?,?,?,?,?) cus_sho_name from dual';
+			SET Db.values = PASSTHRU(query TO Database.{BASIS_DSN} VALUES(bra_code,cus_num,cur_code,led_code,sub_acct_code));
+			SET custName= Db.values.[1];
+			SET Environment.custName = custName;
+			CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId || ' sourceAcct '|| COALESCE(sourceAcct,'') || ' AccountName ::'|| COALESCE(envref.custName,'') ) INTO rc;
+		END IF;
+
+
+		IF MTIType = '0100' THEN
+			/* call the AccountValidation if bankCode 058 within gtbank */
+			IF bankCode = '058' THEN --OutputRoot.XMLNSC.AccountValidation.header.messageId
+				CALL GenerateAcctValidationReq(envref);
+				DECLARE ACCTValidationinputReq CHARACTER;
+				SET ACCTValidationinputReq = CAST(ASBITSTREAM(OutputRoot.XMLNSC) AS CHAR CCSID 1208);
+				CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO', Environment.messageId || ' Account Validation Building Request Message ::'|| ACCTValidationinputReq ) INTO rc;
+				SET OutputLocalEnvironment.Destination.HTTP.RequestURL = HOSTNAME||'/Validation/AccountValidation' ;
+				PROPAGATE TO TERMINAL 'out' ;
+			ELSE
+				/* call the NIPName enquiry interface */
+				CALL GenerateNameEnquieryReq(bankCode,envref);
+				DECLARE NIPNameEnquieryinputReq CHARACTER;
+				SET NIPNameEnquieryinputReq = CAST(ASBITSTREAM(OutputRoot.XMLNSC) AS CHAR CCSID 1208);
+				CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId ||' NIP NAME ENQUIERY Building Request Message ::'|| NIPNameEnquieryinputReq ) INTO rc;
+				SET OutputLocalEnvironment.Destination.HTTP.RequestURL = HOSTNAME||'/nip/enquiry' ;
+				PROPAGATE TO TERMINAL 'out' ;
+			END IF;
+		ELSEIF MTIType = '0200' THEN
+
+			IF bankCode = '058' THEN
+				/* call the SingleDebitSingleCredit within gtbank */
+				CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' SDSC sourceAcct ::'|| COALESCE(Environment.sourceAcct,'') || ' TO SDSC beneficiaryAcct ::'|| COALESCE(Environment.BufferC,'') ) INTO rc;
+				CALL GenerateSingleDebitSingleCredit(envref);
+				DECLARE SDSCinputReq CHARACTER;
+				SET SDSCinputReq = CAST(ASBITSTREAM(OutputRoot.XMLNSC) AS CHAR CCSID 1208);
+				CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' SingleDebitSingleCredit Request ::'|| SDSCinputReq ) INTO rc;
+				SET OutputLocalEnvironment.Destination.HTTP.RequestURL = HOSTNAME||'/FundsTransfer/SingleDebitSingleCredit' ;
+				PROPAGATE TO TERMINAL 'out' ;
+			ELSE
+				/* call the NIPOutward Service*/
+				CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' benName ::'|| COALESCE(benName,'')||' benNameACC :'||COALESCE(BufferC,'') ||', cusName:: '||COALESCE(custName,'' )||', sourceaccount is ::'||COALESCE(sourceAcct,'' ) )INTO rc;
+				CALL GenerateNIPOutwardTransferReq(useridNIP,bankCode,envref);
+				DECLARE NIPOutwardinputReq CHARACTER;
+				SET NIPOutwardinputReq = CAST(ASBITSTREAM(OutputRoot.XMLNSC) AS CHAR CCSID 1208);
+				CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' NIP OUTWARD TRANSFER Building Request Message ::'|| NIPOutwardinputReq ) INTO rc;
+				SET OutputLocalEnvironment.Destination.HTTP.RequestURL = HOSTNAME||'/FundsTransfer/NIPOutwardFundsTransfer' ;
+				PROPAGATE TO TERMINAL 'out' ;
+			END IF;
+		ELSE
+			/* other than 0100 && 0200 */--0420,0421,0121,0120
+			PROPAGATE TO TERMINAL 'out1' ;
+		END IF;
+	END;
+	CREATE PROCEDURE GenerateAcctValidationReq(IN envref REFERENCE) BEGIN
+		SET OutputRoot.XMLNSC.AccountValidation.header.messageId = envref.messageId;
+		SET OutputRoot.XMLNSC.AccountValidation.header.creationDate = envref.creationDate;
+		SET OutputRoot.XMLNSC.AccountValidation.header.systemCode = 'ATM';
+		SET OutputRoot.XMLNSC.AccountValidation.body.accountNumber = envref.BufferC;
+	END;
+	CREATE PROCEDURE GenerateNameEnquieryReq(IN bankCode CHARACTER,IN envref REFERENCE) BEGIN
+		SET OutputRoot.XMLNSC.NIPNameEnquiry.header.messageId = envref.messageId ;
+		SET OutputRoot.XMLNSC.NIPNameEnquiry.header.messageTimeStamp = envref.creationDate ;
+		SET OutputRoot.XMLNSC.NIPNameEnquiry.header.systemCode = 'ATM';
+		SET OutputRoot.XMLNSC.NIPNameEnquiry.body.accountNumber = envref.BufferC;
+		SET OutputRoot.XMLNSC.NIPNameEnquiry.body.benBank = bankCode;
+	END;
+	CREATE PROCEDURE GenerateNIPOutwardTransferReq(IN useridNIP CHARACTER,IN bankCode CHARACTER,IN envref REFERENCE) BEGIN
+		SET OutputRoot.XMLNSC.NIPOutwardFundsTransferRequest.header.messageId = envref.messageId;
+		SET OutputRoot.XMLNSC.NIPOutwardFundsTransferRequest.header.creationDate = envref.creationDate;
+		SET OutputRoot.XMLNSC.NIPOutwardFundsTransferRequest.header.systemCode = 'ATMNIP';
+		SET OutputRoot.XMLNSC.NIPOutwardFundsTransferRequest.header.transferType = 'General';
+
+		SET OutputRoot.XMLNSC.NIPOutwardFundsTransferRequest.body.userid = useridNIP;
+		SET OutputRoot.XMLNSC.NIPOutwardFundsTransferRequest.body.sourceAcct = envref.sourceAcct;
+		SET OutputRoot.XMLNSC.NIPOutwardFundsTransferRequest.body.benBank = bankCode;
+		SET OutputRoot.XMLNSC.NIPOutwardFundsTransferRequest.body.benAcctNo = envref.BufferC;
+		SET OutputRoot.XMLNSC.NIPOutwardFundsTransferRequest.body.amount = envref.Amount;
+		SET OutputRoot.XMLNSC.NIPOutwardFundsTransferRequest.body.channel = 'ATMNIP';
+		SET OutputRoot.XMLNSC.NIPOutwardFundsTransferRequest.body.remarks = REEMARKS;
+		SET OutputRoot.XMLNSC.NIPOutwardFundsTransferRequest.body.custName = envref.custName;
+		SET OutputRoot.XMLNSC.NIPOutwardFundsTransferRequest.body.benName = envref.benName;
+	END;
+	CREATE PROCEDURE GenerateSingleDebitSingleCredit (IN envref REFERENCE)
+	BEGIN
+		SET OutputRoot.XMLNSC.SingleDebitSingleCreditCash.header.messageId = envref.messageId;
+		SET OutputRoot.XMLNSC.SingleDebitSingleCreditCash.header.creationDate = envref.creationDate;
+		SET OutputRoot.XMLNSC.SingleDebitSingleCreditCash.header.systemCode = 'ATM';
+		SET OutputRoot.XMLNSC.SingleDebitSingleCreditCash.header.authenticatedValue = AUTHENICATEDVALUE;
+		SET OutputRoot.XMLNSC.SingleDebitSingleCreditCash.body.accountFrom = envref.sourceAcct;
+		SET OutputRoot.XMLNSC.SingleDebitSingleCreditCash.body.accountTo = envref.BufferC;
+		SET OutputRoot.XMLNSC.SingleDebitSingleCreditCash.body.transferAmount = envref.Amount;
+		SET OutputRoot.XMLNSC.SingleDebitSingleCreditCash.body.explanationCode = EXPLANATIONCODE;
+		SET OutputRoot.XMLNSC.SingleDebitSingleCreditCash.body.remarks = REEMARKS;
+		SET OutputRoot.XMLNSC.SingleDebitSingleCreditCash.body.requestCode = REQUESTCODE;
+		SET OutputRoot.XMLNSC.SingleDebitSingleCreditCash.body.manApp1 = MANAPP1;
+		SET OutputRoot.XMLNSC.SingleDebitSingleCreditCash.body.tellerId = TELLERID;
+		SET OutputRoot.XMLNSC.SingleDebitSingleCreditCash.body.documentAlpha = DOCUMENTALPHA;
+		SET OutputRoot.XMLNSC.SingleDebitSingleCreditCash.body.originatorBranchCode = ORIGINATORBRANCHCODE;
+	END;
+END MODULE;
+----------------------------------------------------------------------------------------------------------------
+-- /* Getting Customer Name from BASISDB */
+-- SET query = 'select get_name2(?,?,?,?,?) cus_sho_name from dual';
+-- DECLARE Db ROW;
+-- SET Db.values = PASSTHRU(query TO Database.{BASIS_DSN} VALUES(bra_code,cus_num,cur_code,led_code,sub_acct_code));
+-- SET custName= Db.values.[1];
+-- SET Environment.custName = custName;
+-- CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO',Environment.messageId|| 'INFO', '127-22subfield destinationaccount BufferC ::'|| COALESCE(BufferC,'') ) INTO rc;
+-- CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| 'benName ::'|| COALESCE(benName,'')||', cusName::'||COALESCE(custName,'' )||', cusName for sourceaccount ::'||COALESCE(sourceAcct,'' ) )INTO rc;
+--------------------------------------------------------------------------------------------------------
+/*Generating NIBSS bankcode for NIP Name Enquiery*/
+--DECLARE NIBSS CHARACTER;
+---DECLARE DestinationInstitutionCode ROW;
+--SET DestinationInstitutionCode.Values[] = SELECT a.NIBSSGeneralCode FROM Database.{EONE_DSN}.{EONESCHEMA}.banks_neft as a where a.NIBSSCode = bankCode;
+--SET NIBSS = DestinationInstitutionCode.Values.NIBSSGeneralCode;
+--CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO','Based on ISO100 field we are calling  NIBSSGeneralCode for NIP Name service::'|| NIBSS ) INTO rc;
+----------------------------------------------------------------------------------------------------------
+/* Finding Request Message Length of 2 Fixed Length */
+CREATE COMPUTE MODULE ISO8583Message_InputLogging
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL initLog4j(LOG4JPATH) INTO init;
+		DECLARE currentTimeStamp,messageId CHARACTER;
+		SET currentTimeStamp = CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'yyyyMMddHHmmssSSSSSS');
+		SET messageId = 'ATM'|| currentTimeStamp;
+		SET Environment.messageId = messageId;
+		SET Environment.systemCode = 'ATM';
+		DECLARE creationDate CHARACTER CAST(CURRENT_TIMESTAMP as CHARACTER FORMAT 'YYYY-MM-dd''T''HH:mm:ss');
+		SET Environment.creationDate = creationDate;
+		CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId ||' RequestReceived and messageId:'||Environment.messageId ) INTO rc;
+		DECLARE I INTEGER 0;
+		DECLARE J,AA INTEGER;
+		DECLARE sumAll INTEGER 0;
+		SET J = CARDINALITY(InputRoot.DFDL.IsoLength.*[]) - 1;
+		DECLARE it INTEGER CARDINALITY(InputRoot.DFDL.IsoLength.*[]);
+		WHILE I <= J DO
+			SET AA = InputRoot.DFDL.IsoLength.[I+1];
+			SET it = it - 1;
+			SET sumAll = sumAll + POWER(2,it) * AA;
+			SET I = I + 1;
+		END WHILE;
+		SET OutputLocalEnvironment.TCPIP.Receive.Length = sumAll;
+		SET OutputLocalEnvironment.TCPIP.Receive.Id = InputLocalEnvironment.TCPIP.Input.ConnectionDetails.Id;
+		SET Environment.ReqLength = sumAll;
+		SET Environment.con = InputLocalEnvironment.TCPIP.Input.ConnectionDetails.Id;
+		CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId || ' TCPIPServerInputID::'|| COALESCE(InputLocalEnvironment.TCPIP.Input.ConnectionDetails.Id,'') ) INTO rc;
+		CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId || ' ISOMessageLength ::'|| COALESCE(CAST(Environment.ReqLength AS CHARACTER),'') ) INTO rc;
+		RETURN TRUE;
+	END;
+END MODULE;
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+/* Sending Error Response To ATM If BASISDB,ESBDB Unavailable */
+CREATE COMPUTE MODULE ISO8583Message_ErrResponse
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL ErrorResponse();
+		RETURN FALSE;
+	END;
+	CREATE PROCEDURE ErrorResponse() BEGIN
+		CALL initLog4j(LOG4JPATH) INTO init;
+		DECLARE excep,parserEX CHARACTER;
+		DECLARE inputdata BLOB;
+		SET parserEX = Environment.XMLNSC.ERRMSG.ERRDESC;
+		IF CONTAINS(parserEX,'TCPIP Server Output') OR CONTAINS(parserEX,'TCPIP Server Receive') OR CONTAINS(parserEX,'facet-valid with respect') OR CONTAINS(parserEX,'TCPIP Server Input') THEN
+			--CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',COALESCE(Environment.messageId,'')||' PARSER EXCEPTION-INVALID MSG ::'|| COALESCE(parserEX,'') ) INTO rc;
+			CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_ERROR','ERROR',COALESCE(Environment.messageId,'')||' EXIT ::' ) INTO rc;
+			--PROPAGATE TO TERMINAL 'out' ;
+			/*-------------------------Parser Exception----------------------*/
+
+			SET Environment.XMLNSC = NULL;
+			CREATE LASTCHILD OF OutputRoot DOMAIN 'XMLNSC' ;
+			--CREATE LASTCHILD OF OutputRoot.XMLNSC NAME 'ISO8583_1987';
+			SET OutputRoot.XMLNSC.ISO8583_1987.MTI_Version = '0';
+			SET OutputRoot.XMLNSC.ISO8583_1987.MTI_MessageClass = '4';
+			SET OutputRoot.XMLNSC.ISO8583_1987.MTI_MessageFunction = '3';
+			SET OutputRoot.XMLNSC.ISO8583_1987.MTI_MessageOrigin = '0';
+
+			CREATE NEXTSIBLING OF OutputRoot.XMLNSC.ISO8583_1987.MTI_MessageOrigin NAME 'PrimaryBitmap';
+
+			DECLARE DFDLPointer REFERENCE TO OutputRoot.XMLNSC.ISO8583_1987.PrimaryBitmap;
+			DECLARE bitMapChar CHARACTER 'Bit';
+
+			DECLARE I INTEGER 1;
+			WHILE I < 65 DO
+				IF I = 1 THEN
+					CREATE LASTCHILD OF DFDLPointer NAME bitMapChar||RIGHT('000'||CAST(I AS CHARACTER),3) VALUE 0 ;
+				ELSEIF I = 39 THEN
+					CREATE LASTCHILD OF DFDLPointer NAME bitMapChar||RIGHT('000'||CAST(I AS CHARACTER),3) VALUE 1 ;
+				ELSE
+					CREATE LASTCHILD OF DFDLPointer NAME bitMapChar||RIGHT('000'||CAST(I AS CHARACTER),3) VALUE 0 ;
+				END IF;
+				SET I = I+1;
+			END WHILE;
+
+			CREATE NEXTSIBLING OF OutputRoot.XMLNSC.ISO8583_1987.PrimaryBitmap NAME 'ResponseCode_039' VALUE '06' ;
+			SET Environment.XMLNSC = OutputRoot.XMLNSC;
+			SET OutputRoot.XMLNSC = Environment.XMLNSC;
+			--DECLARE outputChar CHARACTER CAST(ASBITSTREAM(OutputRoot.XMLNSC) AS CHAR CCSID 1208);
+			--SET OutputRoot.XMLNSC = NULL;
+			--SET OutputRoot.DFDL = Environment.XMLNSC;
+			--SET Environment.XMLNSC = NULL;
+			-------------------------------------------------------------------------------------------
+		ELSE
+
+			DECLARE envref REFERENCE TO Environment;
+			SET Environment.XMLNSC = envref.ISOdata;
+			SET Environment.XMLNSC.ISO8583_1987.MTI_MessageFunction = '1';
+			CREATE NEXTSIBLING OF Environment.XMLNSC.ISO8583_1987.RetrievalReferenceNumber_037 NAME 'ResponseCode_039' ;
+			SET Environment.XMLNSC.ISO8583_1987.ResponseCode_039 = '06';
+			SET Environment.XMLNSC.ISO8583_1987.PrimaryBitmap.Bit039 = 1;
+			----------------------------------------------------------------------
+			DECLARE reqHeaderOneXML,reqHeaderTwoXML CHARACTER;
+			DECLARE reqLenOne,reqLenTwo,resLenOne, resLenTwo INTEGER;
+			DECLARE response22,ThirdPartyBillPaymentheader,ThirdPartyBillPaymentExtensionheader CHARACTER;
+			DECLARE resHeaderOneXML,resHeaderTwoXML,resHeaderOneChar,resHeaderTwoChar CHARACTER;
+
+			SET envref.description = 'Operation Unsuccessfull';
+			SET response22 = Environment.XMLNSC.ISO8583_1987.ReservedPrivate_127.ReservedPrivate_127_22;
+			CALL FindingRequestHeadersLength(response22,reqLenOne,reqLenTwo,ThirdPartyBillPaymentheader,ThirdPartyBillPaymentExtensionheader,reqHeaderOneXML,reqHeaderTwoXML);
+			CALL AddingResponseTags(response22,envref);
+			CALL FindingResponseTagsLength(response22,ThirdPartyBillPaymentheader,ThirdPartyBillPaymentExtensionheader,reqLenOne,reqLenTwo,resLenOne,resLenTwo,resHeaderOneXML,resHeaderTwoXML,resHeaderOneChar,resHeaderTwoChar);
+			SET response22 = resHeaderOneChar||resHeaderTwoChar||SUBSTRING(response22 AFTER '</ThirdPartyBillPaymentExtension>');
+			SET Environment.XMLNSC.ISO8583_1987.ReservedPrivate_127.ReservedPrivate_127_22 VALUE = NULL ;
+			SET Environment.XMLNSC.ISO8583_1987.ReservedPrivate_127.ReservedPrivate_127_22 VALUE = response22;
+			--------------------------------------------------------
+			DECLARE version,messageclass,messagefunction,messageorigin CHARACTER;
+			SET version = Environment.XMLNSC.ISO8583_1987.MTI_Version;
+			SET messageclass = Environment.XMLNSC.ISO8583_1987.MTI_MessageClass;
+			SET messagefunction = Environment.XMLNSC.ISO8583_1987.MTI_MessageFunction;
+			SET messageorigin = Environment.XMLNSC.ISO8583_1987.MTI_MessageOrigin;
+			DECLARE MTIType CHARACTER version||messageclass||messagefunction||messageorigin;
+			CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' responseMTIType logging::'|| MTIType ) INTO rc;
+			/*ISO ErrorResponseXml Logging into RAW_AUDIT_Q*/
+			SET OutputRoot.XMLNSC = Environment.XMLNSC;
+			--DECLARE outputChar CHARACTER CAST(ASBITSTREAM(OutputRoot.XMLNSC) AS CHAR CCSID 1208);
+			--SET OutputRoot.XMLNSC = NULL;
+		END IF;
+		/*Logging Parser AND DB Exception*/
+		DECLARE outputChar CHARACTER CAST(ASBITSTREAM(OutputRoot.XMLNSC) AS CHAR CCSID 1208);
+		SET OutputRoot.XMLNSC = NULL;
+		IF OUT_DB_LOG = 'Y' THEN
+			DECLARE messageId CHARACTER Environment.messageId;
+			DECLARE outRef REFERENCE TO OutputRoot;
+			CALL GenerateRawLogMsg(ApplicationLabel,outputChar,messageId,'ISO8583','Response',outRef);
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'RAW_AUDIT_Q' ;
+			PROPAGATE TO TERMINAL 'out1' ;
+		END IF ;
+		/*Building Response Message*/
+		SET OutputRoot.Properties = Environment.Properties;
+		SET OutputRoot.Properties.MessageType = '{}:ISO8583_1987';
+		CREATE LASTCHILD OF OutputRoot DOMAIN('DFDL');
+		SET OutputRoot.DFDL = Environment.XMLNSC;
+		SET Environment.XMLNSC = NULL;
+		/*Adding Responselength to the ErrorResponseISOMessage*/
+		DECLARE lenISO BLOB;
+		DECLARE responseMsgLength integer;
+		DECLARE outputData CHARACTER CAST(ASBITSTREAM(OutputRoot.DFDL,437) AS CHARACTER CCSID 437);
+		SET lenISO = ASBITSTREAM(OutputRoot.DFDL,437);
+		SET OutputRoot.DFDL = NULL;
+		SET responseMsgLength = LENGTH(lenISO);
+		DECLARE FixedLengthblob BLOB responseMsgLength;
+		DECLARE aaa CHARACTER FixedLengthblob;
+		SET aaa = REPLACE(aaa,'00','');
+		DECLARE resFixedLengthblob BLOB CAST(aaa AS BLOB);
+		SET OutputRoot.Properties = Environment.Properties;
+		SET OutputLocalEnvironment.Destination.TCPIP.Output.Id = Environment.connectionId;
+		CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' sendingResponseTo this connection ::'|| COALESCE(Environment.con,'') ) INTO rc;
+		SET OutputRoot.BLOB.BLOB = CAST(aaa AS BLOB)|| lenISO;
+		DECLARE exceptionChar BLOB OutputRoot.BLOB.BLOB;
+		CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',COALESCE(Environment.messageId,'')|| ' ErrorResponseMessageLength ::'|| CAST(COALESCE(resFixedLengthblob,'') AS CHARACTER)||' ErrorResponselength ::'|| CAST(responseMsgLength AS CHARACTER) ) INTO rc;
+		CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId || ' ExceptionMessage character sent to ATM ::'|| COALESCE(outputData,'') ) INTO rc;
+		--CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',COALESCE(Environment.messageId,'')||' ErrorresponseMSG BLOB sent to ATM  ::'|| CAST(exceptionChar AS CHARACTER) ) INTO rc;
+		PROPAGATE TO TERMINAL 'out2' ;
+
+
+	END;
+END MODULE;
+-------------------------------
+-- CREATE LASTCHILD OF OutputRoot DOMAIN 'XMLNSC' ;
+-- CREATE LASTCHILD OF OutputRoot.XMLNSC NAME 'ISO8583_1987';
+-- SET OutputRoot.XMLNSC.ISO8583_1987.MTI_Version = '0';
+-- SET OutputRoot.XMLNSC.ISO8583_1987.MTI_MessageClass = '4';
+-- SET OutputRoot.XMLNSC.ISO8583_1987.MTI_MessageFunction = '3';
+-- SET OutputRoot.XMLNSC.ISO8583_1987.MTI_MessageOrigin = '0';
+--
+-- CREATE NEXTSIBLING OF OutputRoot.XMLNSC.ISO8583_1987.MTI_MessageOrigin NAME 'PrimaryBitmap';
+--
+-- DECLARE DFDLPointer REFERENCE TO OutputRoot.XMLNSC.ISO8583_1987.PrimaryBitmap;
+-- DECLARE bitMapChar CHARACTER 'Bit';
+--
+-- DECLARE I INTEGER 1;
+-- WHILE I < 65 DO
+-- IF I = 1 THEN
+-- CREATE LASTCHILD OF DFDLPointer NAME bitMapChar||RIGHT('000'||CAST(I AS CHARACTER),3) VALUE 0 ;
+-- ELSEIF I = 39 THEN
+-- CREATE LASTCHILD OF DFDLPointer NAME bitMapChar||RIGHT('000'||CAST(I AS CHARACTER),3) VALUE 1 ;
+-- ELSE
+-- CREATE LASTCHILD OF DFDLPointer NAME bitMapChar||RIGHT('000'||CAST(I AS CHARACTER),3) VALUE 0 ;
+-- END IF;
+-- SET I = I+1;
+-- END WHILE;
+--
+-- CREATE NEXTSIBLING OF OutputRoot.XMLNSC.ISO8583_1987.PrimaryBitmap NAME 'ResponseCode_039' VALUE '06' ;
+-- SET Environment.XMLNSC = OutputRoot.XMLNSC;
+-- SET OutputRoot.XMLNSC = NULL;
+-- SET OutputRoot.DFDL = Environment.XMLNSC;
+-- SET Environment.XMLNSC = NULL;
+--------------------------------

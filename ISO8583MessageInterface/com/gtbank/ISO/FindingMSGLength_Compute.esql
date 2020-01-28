@@ -1,0 +1,23 @@
+BROKER SCHEMA com.gtbank.ISO
+
+
+CREATE COMPUTE MODULE FindingMSGLength_Compute
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+	  DECLARE I INTEGER 0;
+      DECLARE J,AA INTEGER;
+      DECLARE SUMALL INTEGER 0;
+      SET J = CARDINALITY(InputRoot.DFDL.IsoLength.*[])-1;
+      DECLARE it INTEGER CARDINALITY(InputRoot.DFDL.IsoLength.*[]);
+      	
+		WHILE I <= J DO -----00000100010
+      	SET AA = InputRoot.DFDL.IsoLength.[I+1];
+      	SET it  = it - 1; 
+      	SET SUMALL  = SUMALL + POWER(2,it) * AA;
+  		
+      	SET I = I + 1; 
+      END WHILE;
+      SET OutputLocalEnvironment.TCPIP.Receive.Length = SUMALL;
+		RETURN TRUE;
+	END;
+END MODULE;

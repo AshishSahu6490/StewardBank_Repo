@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ComIbmMQOutput.msgnode="ComIbmMQOutput.msgnode" xmlns:ComIbmTCPIPServerInput.msgnode="ComIbmTCPIPServerInput.msgnode" xmlns:ComIbmTCPIPServerOutput.msgnode="ComIbmTCPIPServerOutput.msgnode" xmlns:ComIbmTCPIPServerReceive.msgnode="ComIbmTCPIPServerReceive.msgnode" xmlns:ComIbmTryCatch.msgnode="ComIbmTryCatch.msgnode" xmlns:ComIbmWSRequest.msgnode="ComIbmWSRequest.msgnode" xmlns:com_gtbank_exceptionhandler_ExceptionHandler.subflow="com/gtbank/exceptionhandler/ExceptionHandler.subflow"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility" nsURI="com/gtbank/ISO/ISO8583Message.msgflow" nsPrefix="com_gtbank_ISO_ISO8583Message.msgflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.HOSTNAME" name="HOSTNAME" defaultValueLiteral="http://10.3.26.112:7080">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.AUTHENICATEDVALUE" name="AUTHENICATEDVALUE" defaultValueLiteral="HardWare">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.EXPLANATIONCODE" name="EXPLANATIONCODE" defaultValueLiteral="102">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.REQUESTCODE" name="REQUESTCODE" defaultValueLiteral="32">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.MANAPP1" name="MANAPP1" defaultValueLiteral="0">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.TELLERID" name="TELLERID" defaultValueLiteral="9938">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DOCUMENTALPHA" name="DOCUMENTALPHA" defaultValueLiteral="GAPS">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.ORIGINATORBRANCHCODE" name="ORIGINATORBRANCHCODE" defaultValueLiteral="999">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.LOG4JPATH" name="LOG4JPATH" defaultValueLiteral="C:\TCP\LOGS\Log4jConfigurationFile .xml">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.LOG4JNAME" name="LOG4JNAME" defaultValueLiteral="ISO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.REEMARKS" name="REEMARKS" defaultValueLiteral="ATM Local Transfer">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.INP_DB_LOG" name="INP_DB_LOG" defaultValueLiteral="Y">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.OUT_DB_LOG" name="OUT_DB_LOG" defaultValueLiteral="Y">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.BASIS_DSN" name="BASIS_DSN" defaultValueLiteral="BASISDB">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.MAPACCT_TABLE" name="MAPACCT_TABLE" defaultValueLiteral="MAP_ACCT">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.BASISSCHEMA" name="BASISSCHEMA" defaultValueLiteral="banksys">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.ESB_DSN" name="ESB_DSN" defaultValueLiteral="ESBDB">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.ATMKeyMapping" name="ATMKeyMapping" defaultValueLiteral="ATMKeyMapping">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.ESBSCHEMA" name="ESBSCHEMA" defaultValueLiteral="dbo">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.LOG4JNAM" name="LOG4JNAM" defaultValueLiteral="ISO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.CcEmail" name="CcEmail" defaultValueLiteral="fisayo.fagbemi@gtbanklab.com">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.EMAIL_ALERT" name="EMAIL_ALERT" defaultValueLiteral="Y">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.EMAIL_QUEUE" name="EMAIL_QUEUE" defaultValueLiteral="EMAIL_Q">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.ERR_DB" name="ERR_DB" defaultValueLiteral="Y">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.MobileNumber" name="MobileNumber" defaultValueLiteral="91954">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.RETRY_QUEUE" name="RETRY_QUEUE" defaultValueLiteral="RETRY">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.SMS_ALERT" name="SMS_ALERT" defaultValueLiteral="N">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.SMS_QUEUE" name="SMS_QUEUE" defaultValueLiteral="SMS_QUEUE">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.ToEmail" name="ToEmail" defaultValueLiteral="fisayo.fagbemi@gtbanklab.com">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.USE_RETRY" name="USE_RETRY" defaultValueLiteral="N">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <translation xmi:type="utility:TranslatableString" key="ISO8583Message" bundleName="com/gtbank/ISO/ISO8583Message" pluginId="ISO8583MessageInterface"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/ISO8583MessageInterface/icons/full/obj16/ISO8583Message.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/ISO8583MessageInterface/icons/full/obj30/ISO8583Message.gif"/>
+    <composition>
+      <nodes xmi:type="ComIbmTCPIPServerInput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="3,147" connectionDetails="ConfigurableService2002" timeoutWaitingForData="9999" modifyInputStream="reserve" messageDomainProperty="DFDL" messageTypeProperty="{}:IsoLength" validateTiming="immediate" recordDetection="fixedLength" recordLength="2" customDelimiter="0D0A" validateMaster="contentAndValue">
+        <translation xmi:type="utility:ConstantString" string="TCPIP Server Input"/>
+      </nodes>
+      <nodes xmi:type="ComIbmTCPIPServerOutput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_7" location="842,159" connectionDetails="ConfigurableService2002" timeoutSendingData="9999" modifyOutputStream="release" modifyInputStream="release">
+        <translation xmi:type="utility:ConstantString" string="TCPIP Server Output"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_8" location="691,154" computeExpression="esql://routine/com.gtbank.ISO#GenegatingResponseMessage.Main" computeMode="destinationAndMessage">
+        <translation xmi:type="utility:ConstantString" string="GenegatingResponseMessage"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_9" location="430,153" computeExpression="esql://routine/com.gtbank.ISO#ReadingISOMessage.Main" computeMode="destinationAndMessage">
+        <translation xmi:type="utility:ConstantString" string="ReadingISO&amp;MappingRequest"/>
+      </nodes>
+      <nodes xmi:type="ComIbmWSRequest.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_4" location="593,154" URLSpecifier="http://localhost:7080/Validation/AccountValidation" timeoutForServer="60" httpVersion="1.1" protocol="TLS" messageDomainProperty="XMLNSC">
+        <translation xmi:type="utility:ConstantString" string="HTTP Request"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_5" location="121,148" computeExpression="esql://routine/com.gtbank.ISO#ISO8583Message_InputLogging.Main" computeMode="destinationAndMessage">
+        <translation xmi:type="utility:ConstantString" string="FindingMSGLength"/>
+      </nodes>
+      <nodes xmi:type="com_gtbank_exceptionhandler_ExceptionHandler.subflow:FCMComposite_1" xmi:id="FCMComposite_1_6" location="489,303">
+        <translation xmi:type="utility:ConstantString" string="ExceptionHandler"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_10" location="708,299" computeExpression="esql://routine/com.gtbank.ISO#ISO8583Message_ErrResponse.Main" computeMode="destinationAndMessage">
+        <translation xmi:type="utility:ConstantString" string="SendingErrorResponse"/>
+      </nodes>
+      <nodes xmi:type="ComIbmTCPIPServerReceive.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_3" location="242,149" connectionDetails="ConfigurableService2002" timeoutWaitingForData="9999" messageDomainProperty="DFDL" messageTypeProperty="{}:ISO8583_1987" validateTiming="immediate" recordDetection="fixedLength" recordLength="80" validateMaster="contentAndValue">
+        <translation xmi:type="utility:ConstantString" string="TCPIP Server Receive"/>
+      </nodes>
+      <nodes xmi:type="ComIbmTryCatch.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_12" location="382,149">
+        <translation xmi:type="utility:ConstantString" string="Try Catch"/>
+      </nodes>
+      <nodes xmi:type="ComIbmMQOutput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_17" location="884,23" queueName="RAW_AUDIT_Q" destinationMode="list">
+        <translation xmi:type="utility:ConstantString" string="RAW_AUDIT_Q"/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_4" sourceNode="FCMComposite_1_9" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_6" targetNode="FCMComposite_1_8" sourceNode="FCMComposite_1_4" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_11" targetNode="FCMComposite_1_10" sourceNode="FCMComposite_1_6" sourceTerminalName="OutTerminal.Output" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_13" targetNode="FCMComposite_1_8" sourceNode="FCMComposite_1_4" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.in">
+        <bendPoints>67,-33,-72,-33</bendPoints>
+      </connections>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_4" targetNode="FCMComposite_1_3" sourceNode="FCMComposite_1_5" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_15" targetNode="FCMComposite_1_8" sourceNode="FCMComposite_1_9" sourceTerminalName="OutTerminal.out1" targetTerminalName="InTerminal.in">
+        <bendPoints>29,-47,-230,-48</bendPoints>
+        <bendPoints>232,-50,-27,-51</bendPoints>
+      </connections>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_3" targetNode="FCMComposite_1_7" sourceNode="FCMComposite_1_8" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_21" targetNode="FCMComposite_1_17" sourceNode="FCMComposite_1_8" sourceTerminalName="OutTerminal.out1" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_14" targetNode="FCMComposite_1_8" sourceNode="FCMComposite_1_4" sourceTerminalName="OutTerminal.error" targetTerminalName="InTerminal.in">
+        <bendPoints>100,22,-116,23</bendPoints>
+      </connections>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_7" targetNode="FCMComposite_1_6" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_2" targetNode="FCMComposite_1_17" sourceNode="FCMComposite_1_9" sourceTerminalName="OutTerminal.out2" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_8" targetNode="FCMComposite_1_6" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_9" targetNode="FCMComposite_1_5" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_12" targetNode="FCMComposite_1_12" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_16" targetNode="FCMComposite_1_6" sourceNode="FCMComposite_1_12" sourceTerminalName="OutTerminal.catch" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_17" targetNode="FCMComposite_1_9" sourceNode="FCMComposite_1_12" sourceTerminalName="OutTerminal.try" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_18" targetNode="FCMComposite_1_6" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.catch" targetTerminalName="InTerminal.Input">
+        <bendPoints>223,102,-261,-54</bendPoints>
+      </connections>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_5" targetNode="FCMComposite_1_6" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.timeout" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_19" targetNode="FCMComposite_1_17" sourceNode="FCMComposite_1_10" sourceTerminalName="OutTerminal.out1" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_20" targetNode="FCMComposite_1_7" sourceNode="FCMComposite_1_10" sourceTerminalName="OutTerminal.out2" targetTerminalName="InTerminal.in"/>
+    </composition>
+    <propertyOrganizer>
+      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.HOSTNAME">
+        <propertyName xmi:type="utility:TranslatableString" key="Property.HOSTNAME" bundleName="com/gtbank/ISO/ISO8583Message" pluginId="ISO8583MessageInterface"/>
+        <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.AUTHENICATEDVALUE">
+          <propertyName xmi:type="utility:TranslatableString" key="Property.AUTHENICATEDVALUE" bundleName="com/gtbank/ISO/ISO8583Message" pluginId="ISO8583MessageInterface"/>
+          <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.EXPLANATIONCODE">
+            <propertyName xmi:type="utility:TranslatableString" key="Property.EXPLANATIONCODE" bundleName="com/gtbank/ISO/ISO8583Message" pluginId="ISO8583MessageInterface"/>
+            <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.REQUESTCODE">
+              <propertyName xmi:type="utility:TranslatableString" key="Property.REQUESTCODE" bundleName="com/gtbank/ISO/ISO8583Message" pluginId="ISO8583MessageInterface"/>
+              <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.MANAPP1">
+                <propertyName xmi:type="utility:TranslatableString" key="Property.MANAPP1" bundleName="com/gtbank/ISO/ISO8583Message" pluginId="ISO8583MessageInterface"/>
+                <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.TELLERID">
+                  <propertyName xmi:type="utility:TranslatableString" key="Property.TELLERID" bundleName="com/gtbank/ISO/ISO8583Message" pluginId="ISO8583MessageInterface"/>
+                  <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.DOCUMENTALPHA">
+                    <propertyName xmi:type="utility:TranslatableString" key="Property.DOCUMENTALPHA" bundleName="com/gtbank/ISO/ISO8583Message" pluginId="ISO8583MessageInterface"/>
+                    <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.ORIGINATORBRANCHCODE">
+                      <propertyName xmi:type="utility:TranslatableString" key="Property.ORIGINATORBRANCHCODE" bundleName="com/gtbank/ISO/ISO8583Message" pluginId="ISO8583MessageInterface"/>
+                      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.LOG4JPATH">
+                        <propertyName xmi:type="utility:TranslatableString" key="Property.LOG4JPATH" bundleName="com/gtbank/ISO/ISO8583Message" pluginId="ISO8583MessageInterface"/>
+                        <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.LOG4JNAME">
+                          <propertyName xmi:type="utility:TranslatableString" key="Property.LOG4JNAME" bundleName="com/gtbank/ISO/ISO8583Message" pluginId="ISO8583MessageInterface"/>
+                          <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.REEMARKS">
+                            <propertyName xmi:type="utility:TranslatableString" key="Property.REEMARKS" bundleName="com/gtbank/ISO/ISO8583Message" pluginId="ISO8583MessageInterface"/>
+                            <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.INP_DB_LOG">
+                              <propertyName xmi:type="utility:TranslatableString" key="Property.INP_DB_LOG" bundleName="com/gtbank/ISO/ISO8583Message" pluginId="ISO8583MessageInterface"/>
+                              <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.OUT_DB_LOG">
+                                <propertyName xmi:type="utility:TranslatableString" key="Property.OUT_DB_LOG" bundleName="com/gtbank/ISO/ISO8583Message" pluginId="ISO8583MessageInterface"/>
+                                <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.BASIS_DSN">
+                                  <propertyName xmi:type="utility:TranslatableString" key="Property.BASIS_DSN" bundleName="com/gtbank/ISO/ISO8583Message" pluginId="ISO8583MessageInterface"/>
+                                  <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.MAPACCT_TABLE">
+                                    <propertyName xmi:type="utility:TranslatableString" key="Property.MAPACCT_TABLE" bundleName="com/gtbank/ISO/ISO8583Message" pluginId="ISO8583MessageInterface"/>
+                                    <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.BASISSCHEMA">
+                                      <propertyName xmi:type="utility:TranslatableString" key="Property.BASISSCHEMA" bundleName="com/gtbank/ISO/ISO8583Message" pluginId="ISO8583MessageInterface"/>
+                                      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.ESB_DSN">
+                                        <propertyName xmi:type="utility:TranslatableString" key="Property.ESB_DSN" bundleName="com/gtbank/ISO/ISO8583Message" pluginId="ISO8583MessageInterface"/>
+                                        <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.ATMKeyMapping">
+                                          <propertyName xmi:type="utility:TranslatableString" key="Property.ATMKeyMapping" bundleName="com/gtbank/ISO/ISO8583Message" pluginId="ISO8583MessageInterface"/>
+                                          <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.ESBSCHEMA">
+                                            <propertyName xmi:type="utility:TranslatableString" key="Property.ESBSCHEMA" bundleName="com/gtbank/ISO/ISO8583Message" pluginId="ISO8583MessageInterface"/>
+                                            <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.LOG4JNAM">
+                                              <propertyName xmi:type="utility:TranslatableString" key="Property.LOG4JNAM" bundleName="com/gtbank/exceptionhandler/ExceptionHandler" pluginId="GTB_Lib"/>
+                                              <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.CcEmail">
+                                                <propertyName xmi:type="utility:TranslatableString" key="Property.CcEmail" bundleName="com/gtbank/exceptionhandler/ExceptionHandler" pluginId="GTB_Lib"/>
+                                                <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.EMAIL_ALERT">
+                                                  <propertyName xmi:type="utility:TranslatableString" key="Property.EMAIL_ALERT" bundleName="com/gtbank/exceptionhandler/ExceptionHandler" pluginId="GTB_Lib"/>
+                                                  <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.EMAIL_QUEUE">
+                                                    <propertyName xmi:type="utility:TranslatableString" key="Property.EMAIL_QUEUE" bundleName="com/gtbank/exceptionhandler/ExceptionHandler" pluginId="GTB_Lib"/>
+                                                    <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.ERR_DB">
+                                                      <propertyName xmi:type="utility:TranslatableString" key="Property.ERR_DB" bundleName="com/gtbank/exceptionhandler/ExceptionHandler" pluginId="GTB_Lib"/>
+                                                      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.MobileNumber">
+                                                        <propertyName xmi:type="utility:TranslatableString" key="Property.MobileNumber" bundleName="com/gtbank/exceptionhandler/ExceptionHandler" pluginId="GTB_Lib"/>
+                                                        <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.RETRY_QUEUE">
+                                                          <propertyName xmi:type="utility:TranslatableString" key="Property.RETRY_QUEUE" bundleName="com/gtbank/exceptionhandler/ExceptionHandler" pluginId="GTB_Lib"/>
+                                                          <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.SMS_ALERT">
+                                                            <propertyName xmi:type="utility:TranslatableString" key="Property.SMS_ALERT" bundleName="com/gtbank/exceptionhandler/ExceptionHandler" pluginId="GTB_Lib"/>
+                                                            <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.SMS_QUEUE">
+                                                              <propertyName xmi:type="utility:TranslatableString" key="Property.SMS_QUEUE" bundleName="com/gtbank/exceptionhandler/ExceptionHandler" pluginId="GTB_Lib"/>
+                                                              <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.ToEmail">
+                                                                <propertyName xmi:type="utility:TranslatableString" key="Property.ToEmail" bundleName="com/gtbank/exceptionhandler/ExceptionHandler" pluginId="GTB_Lib"/>
+                                                                <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.USE_RETRY">
+                                                                  <propertyName xmi:type="utility:TranslatableString" key="Property.USE_RETRY" bundleName="com/gtbank/exceptionhandler/ExceptionHandler" pluginId="GTB_Lib"/>
+                                                                </propertyDescriptor>
+                                                              </propertyDescriptor>
+                                                            </propertyDescriptor>
+                                                          </propertyDescriptor>
+                                                        </propertyDescriptor>
+                                                      </propertyDescriptor>
+                                                    </propertyDescriptor>
+                                                  </propertyDescriptor>
+                                                </propertyDescriptor>
+                                              </propertyDescriptor>
+                                            </propertyDescriptor>
+                                          </propertyDescriptor>
+                                        </propertyDescriptor>
+                                      </propertyDescriptor>
+                                    </propertyDescriptor>
+                                  </propertyDescriptor>
+                                </propertyDescriptor>
+                              </propertyDescriptor>
+                            </propertyDescriptor>
+                          </propertyDescriptor>
+                        </propertyDescriptor>
+                      </propertyDescriptor>
+                    </propertyDescriptor>
+                  </propertyDescriptor>
+                </propertyDescriptor>
+              </propertyDescriptor>
+            </propertyDescriptor>
+          </propertyDescriptor>
+        </propertyDescriptor>
+      </propertyDescriptor>
+    </propertyOrganizer>
+    <attributeLinks promotedAttribute="Property.LOG4JNAM" overriddenNodes="FCMComposite_1_6">
+      <overriddenAttribute href="com/gtbank/exceptionhandler/ExceptionHandler.subflow#Property.LOG4JNAM"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.CcEmail" overriddenNodes="FCMComposite_1_6">
+      <overriddenAttribute href="com/gtbank/exceptionhandler/ExceptionHandler.subflow#Property.CcEmail"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.EMAIL_ALERT" overriddenNodes="FCMComposite_1_6">
+      <overriddenAttribute href="com/gtbank/exceptionhandler/ExceptionHandler.subflow#Property.EMAIL_ALERT"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.EMAIL_QUEUE" overriddenNodes="FCMComposite_1_6">
+      <overriddenAttribute href="com/gtbank/exceptionhandler/ExceptionHandler.subflow#Property.EMAIL_QUEUE"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.ERR_DB" overriddenNodes="FCMComposite_1_6">
+      <overriddenAttribute href="com/gtbank/exceptionhandler/ExceptionHandler.subflow#Property.ERR_DB"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.MobileNumber" overriddenNodes="FCMComposite_1_6">
+      <overriddenAttribute href="com/gtbank/exceptionhandler/ExceptionHandler.subflow#Property.MobileNumber"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.RETRY_QUEUE" overriddenNodes="FCMComposite_1_6">
+      <overriddenAttribute href="com/gtbank/exceptionhandler/ExceptionHandler.subflow#Property.RETRY_QUEUE"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.SMS_ALERT" overriddenNodes="FCMComposite_1_6">
+      <overriddenAttribute href="com/gtbank/exceptionhandler/ExceptionHandler.subflow#Property.SMS_ALERT"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.SMS_QUEUE" overriddenNodes="FCMComposite_1_6">
+      <overriddenAttribute href="com/gtbank/exceptionhandler/ExceptionHandler.subflow#Property.SMS_QUEUE"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.ToEmail" overriddenNodes="FCMComposite_1_6">
+      <overriddenAttribute href="com/gtbank/exceptionhandler/ExceptionHandler.subflow#Property.ToEmail"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.USE_RETRY" overriddenNodes="FCMComposite_1_6">
+      <overriddenAttribute href="com/gtbank/exceptionhandler/ExceptionHandler.subflow#Property.USE_RETRY"/>
+    </attributeLinks>
+    <stickyBoard/>
+  </eClassifiers>
+</ecore:EPackage>

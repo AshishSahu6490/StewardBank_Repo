@@ -1,0 +1,354 @@
+
+
+
+
+
+BROKER SCHEMA com.gtbank.ISO
+PATH com.gtbank.exceptionhandler,com.gtbank.utils,com.gtbank.logging;
+DECLARE ToEmail EXTERNAL CHARACTER '';
+DECLARE CcEmail EXTERNAL CHARACTER '';
+DECLARE EMAIL_QUEUE EXTERNAL CHARACTER '';
+DECLARE EMAIL_ALERT EXTERNAL CHARACTER '';
+--DECLARE LOG4JPATH EXTERNAL CHARACTER '';
+--DECLARE LOG4JNAME EXTERNAL CHARACTER '';
+--DECLARE OUT_DB_LOG EXTERNAL CHARACTER '';
+--DECLARE BASIS_DSN EXTERNAL CHARACTER '';
+--DECLARE MAPACCT_TABLE EXTERNAL CHARACTER '';
+--DECLARE BASISSCHEMA EXTERNAL CHARACTER '';
+
+CREATE COMPUTE MODULE GenegatingResponseMessage
+	DECLARE init BOOLEAN;
+	DECLARE rc BOOLEAN;
+
+
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL initLog4j(LOG4JPATH) INTO init;
+		DECLARE exceptionDescription,socketError,interfaceName,responseMsg CHARACTER;
+		DECLARE envref REFERENCE TO Environment;
+		DECLARE Inputref REFERENCE TO InputRoot.XMLNSC;
+		SET interfaceName = FIELDNAME(Inputref.[1] ) ;
+
+		DECLARE reqHeaderOneXML,reqHeaderTwoXML CHARACTER;
+		DECLARE reqLenOne,reqLenTwo,resLenOne, resLenTwo INTEGER;
+		DECLARE response22,ThirdPartyBillPaymentheader,ThirdPartyBillPaymentExtensionheader CHARACTER;
+		DECLARE resHeaderOneXML,resHeaderTwoXML,resHeaderOneChar,resHeaderTwoChar CHARACTER;
+		
+		/*If interfaceName "AccountValidationResponse" Building Account Validatin Response*/
+		IF interfaceName = 'AccountValidationResponse' THEN
+			SET Environment.description = 'Transfer to GTBANK';
+			SET Environment.XMLNSC.ISO8583_1987.MTI_MessageFunction = '1';
+			DECLARE inputchar REFERENCE TO InputRoot.XMLNSC;
+			DECLARE status CHARACTER Inputref.AccountValidationResponse.body.status;
+			DECLARE description CHARACTER Inputref.AccountValidationResponse.header.responseDescription;
+			CREATE NEXTSIBLING OF Environment.XMLNSC.ISO8583_1987.RetrievalReferenceNumber_037 NAME 'ResponseCode_039' ;
+			IF status = '1' THEN --success
+				SET Environment.XMLNSC.ISO8583_1987.ResponseCode_039 = '00';
+			ELSE
+				SET Environment.XMLNSC.ISO8583_1987.ResponseCode_039 = '06';
+			END IF;
+			SET Environment.XMLNSC.ISO8583_1987.PrimaryBitmap.Bit039 = 1;
+			SET responseMsg = CAST(ASBITSTREAM(InputRoot.XMLNSC) AS CHAR CCSID InputRoot.Properties.CodedCharSetId);
+			CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' ServiceRespose status::'|| status || ' ServiceRespose description::'|| description ) INTO rc;
+			CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' Service Respose Received ::'|| responseMsg ) INTO rc;
+			-- DECLARE reqHeaderOneXML,reqHeaderTwoXML CHARACTER;
+			-- DECLARE reqLenOne,reqLenTwo,resLenOne, resLenTwo INTEGER;
+			-- DECLARE response22,ThirdPartyBillPaymentheader,ThirdPartyBillPaymentExtensionheader CHARACTER;
+			-- DECLARE resHeaderOneXML,resHeaderTwoXML,resHeaderOneChar,resHeaderTwoChar CHARACTER;
+			SET response22 = Environment.XMLNSC.ISO8583_1987.ReservedPrivate_127.ReservedPrivate_127_22;
+			CALL FindingRequestHeadersLength(response22,reqLenOne,reqLenTwo,ThirdPartyBillPaymentheader,ThirdPartyBillPaymentExtensionheader,reqHeaderOneXML,reqHeaderTwoXML);
+			CALL AddingResponseTags(response22,envref);
+			CALL FindingResponseTagsLength(response22,ThirdPartyBillPaymentheader,ThirdPartyBillPaymentExtensionheader,reqLenOne,reqLenTwo,resLenOne,resLenTwo,resHeaderOneXML,resHeaderTwoXML,resHeaderOneChar,resHeaderTwoChar);
+			SET response22 = resHeaderOneChar||resHeaderTwoChar||SUBSTRING(response22 AFTER '</ThirdPartyBillPaymentExtension>');
+			SET Environment.XMLNSC.ISO8583_1987.ReservedPrivate_127.ReservedPrivate_127_22 VALUE = NULL ;
+			SET Environment.XMLNSC.ISO8583_1987.ReservedPrivate_127.ReservedPrivate_127_22 VALUE = response22;
+			/*Building Name Enquiery Response*/
+		ELSEIF interfaceName = 'NIPNameEnquiryResponse' THEN
+			SET Environment.XMLNSC.ISO8583_1987.MTI_MessageFunction = '1';
+			DECLARE status CHARACTER Inputref.NIPNameEnquiryResponse.header.responseCode;
+			DECLARE description CHARACTER Inputref.NIPNameEnquiryResponse.header.responseError;
+			SET Environment.accountName = Inputref.NIPNameEnquiryResponse.body.AccountName;
+			SET Environment.description = 'Transfer to '||COALESCE(Environment.Variables.BankData.BankShortName,'');
+			CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' ServiceResposeDescription ::'|| COALESCE(description,'')|| ' and the status '||COALESCE(status,'') ) INTO rc;
+			CREATE NEXTSIBLING OF Environment.XMLNSC.ISO8583_1987.RetrievalReferenceNumber_037 NAME 'ResponseCode_039' ;
+			IF status = '1000' THEN
+				SET Environment.XMLNSC.ISO8583_1987.ResponseCode_039 = '00';
+			ELSE
+				SET Environment.XMLNSC.ISO8583_1987.ResponseCode_039 = '06';
+			END IF;
+			SET Environment.XMLNSC.ISO8583_1987.PrimaryBitmap.Bit039 = 1;
+			SET responseMsg = CAST(ASBITSTREAM(InputRoot.XMLNSC) AS CHAR CCSID InputRoot.Properties.CodedCharSetId);
+			CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' Service Respose Received Successfully::'|| responseMsg ) INTO rc;
+			/*Changing 127-22 Sub Field Headers*/
+			-- DECLARE reqHeaderOneXML,reqHeaderTwoXML,response22,ThirdPartyBillPaymentheader,ThirdPartyBillPaymentExtensionheader CHARACTER;
+			-- DECLARE reqLenOne,reqLenTwo,resLenOne, resLenTwo INTEGER;
+			-- DECLARE resHeaderOneXML,resHeaderTwoXML,resHeaderOneChar,resHeaderTwoChar CHARACTER;
+			SET response22 = Environment.XMLNSC.ISO8583_1987.ReservedPrivate_127.ReservedPrivate_127_22;
+			CALL FindingRequestHeadersLength(response22,reqLenOne,reqLenTwo,ThirdPartyBillPaymentheader,ThirdPartyBillPaymentExtensionheader,reqHeaderOneXML,reqHeaderTwoXML);
+			CALL AddingResponseTags(response22,envref);
+			CALL FindingResponseTagsLength(response22,ThirdPartyBillPaymentheader,ThirdPartyBillPaymentExtensionheader,reqLenOne,reqLenTwo,resLenOne,resLenTwo,resHeaderOneXML,resHeaderTwoXML,resHeaderOneChar,resHeaderTwoChar);
+			SET response22 = resHeaderOneChar||resHeaderTwoChar||SUBSTRING(response22 AFTER '</ThirdPartyBillPaymentExtension>');
+			SET Environment.XMLNSC.ISO8583_1987.ReservedPrivate_127.ReservedPrivate_127_22 VALUE = NULL ;
+			SET Environment.XMLNSC.ISO8583_1987.ReservedPrivate_127.ReservedPrivate_127_22 VALUE = response22;
+			CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' total response 127-22subfield::'||Environment.XMLNSC.ISO8583_1987.ReservedPrivate_127.ReservedPrivate_127_22) INTO rc;
+
+		ELSEIF interfaceName = 'singleDebitSingleCreditCashResponse' THEN
+			SET Environment.XMLNSC.ISO8583_1987.MTI_MessageFunction = '1';
+			DECLARE responseCode CHARACTER Inputref.singleDebitSingleCreditCashResponse.header.responseCode;
+			DECLARE description CHARACTER Inputref.singleDebitSingleCreditCashResponse.header.responseDescription;
+			SET Environment.description = description;
+			CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' ServiceRespose status::'|| responseCode || ' ServiceResposeDescription::'|| description ) INTO rc;
+			CREATE NEXTSIBLING OF Environment.XMLNSC.ISO8583_1987.RetrievalReferenceNumber_037 NAME 'ResponseCode_039' ;
+			IF responseCode = '1000' OR responseCode = '6000' OR CONTAINS(description,'Transaction Under Processing')  THEN
+				SET Environment.XMLNSC.ISO8583_1987.ResponseCode_039 = '00';
+			ELSEIF responseCode = '1004' AND CONTAINS(description,'Insufficient Funds') THEN
+				SET Environment.XMLNSC.ISO8583_1987.ResponseCode_039 = '51';
+			ELSEIF responseCode = '1004' AND CONTAINS(description,'Account Restriction') THEN
+				SET Environment.XMLNSC.ISO8583_1987.ResponseCode_039 = '01';
+			ELSE
+				SET Environment.XMLNSC.ISO8583_1987.ResponseCode_039 = '06';
+			END IF;
+			SET Environment.XMLNSC.ISO8583_1987.PrimaryBitmap.Bit039 = 1;
+			SET responseMsg = CAST(ASBITSTREAM(InputRoot.XMLNSC) AS CHAR CCSID InputRoot.Properties.CodedCharSetId);
+			CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' Service Respose Received Successfully::'|| responseMsg ) INTO rc;
+			-- DECLARE reqHeaderOneXML,reqHeaderTwoXML CHARACTER;
+			-- DECLARE reqLenOne,reqLenTwo,resLenOne, resLenTwo INTEGER;
+			-- DECLARE response22,ThirdPartyBillPaymentheader,ThirdPartyBillPaymentExtensionheader CHARACTER;
+			-- DECLARE resHeaderOneXML,resHeaderTwoXML,resHeaderOneChar,resHeaderTwoChar CHARACTER;
+			SET response22 = Environment.XMLNSC.ISO8583_1987.ReservedPrivate_127.ReservedPrivate_127_22;
+
+			CALL FindingRequestHeadersLength(response22,reqLenOne,reqLenTwo,ThirdPartyBillPaymentheader,ThirdPartyBillPaymentExtensionheader,reqHeaderOneXML,reqHeaderTwoXML);
+			CALL AddingResponseTags(response22,envref);
+			CALL FindingResponseTagsLength(response22,ThirdPartyBillPaymentheader,ThirdPartyBillPaymentExtensionheader,reqLenOne,reqLenTwo,resLenOne,resLenTwo,resHeaderOneXML,resHeaderTwoXML,resHeaderOneChar,resHeaderTwoChar);
+			SET response22 = resHeaderOneChar||resHeaderTwoChar||SUBSTRING(response22 AFTER '</ThirdPartyBillPaymentExtension>');
+			/*Adding total response22 to DFDL*/
+			SET Environment.XMLNSC.ISO8583_1987.ReservedPrivate_127.ReservedPrivate_127_22 VALUE = NULL ;
+			SET Environment.XMLNSC.ISO8583_1987.ReservedPrivate_127.ReservedPrivate_127_22 VALUE = response22;
+			--CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' total response 127-22subfield::'||Environment.XMLNSC.ISO8583_1987.ReservedPrivate_127.ReservedPrivate_127_22) INTO rc;
+			/*Building NIP Outward Funds TransferResponse*/
+		ELSEIF interfaceName = 'NIPOutwardFundsTransferResponse' THEN
+			SET Environment.XMLNSC.ISO8583_1987.MTI_MessageFunction = '1';
+			DECLARE status CHARACTER Inputref.NIPOutwardFundsTransferResponse.header.responseCode;
+			DECLARE description CHARACTER Inputref.NIPOutwardFundsTransferResponse.header.responseDescription;
+			SET Environment.description = description;
+			CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' ServiceRespose status::'|| status || ' ServiceResposeDescription::'|| description ) INTO rc;
+			CREATE NEXTSIBLING OF Environment.XMLNSC.ISO8583_1987.RetrievalReferenceNumber_037 NAME 'ResponseCode_039' ;
+			IF status = '1000' THEN --success
+				SET Environment.XMLNSC.ISO8583_1987.ResponseCode_039 = '00';
+			ELSEIF status = '1004' THEN --insufficient funds
+				SET Environment.XMLNSC.ISO8583_1987.ResponseCode_039 = '51';
+			ELSE
+				SET Environment.XMLNSC.ISO8583_1987.ResponseCode_039 = '06';
+			END IF;
+			SET Environment.XMLNSC.ISO8583_1987.PrimaryBitmap.Bit039 = 1;
+			SET responseMsg = CAST(ASBITSTREAM(InputRoot.XMLNSC) AS CHAR CCSID InputRoot.Properties.CodedCharSetId);
+			CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' Service Respose Received Successfully::'|| responseMsg ) INTO rc;
+			-- DECLARE reqHeaderOneXML,reqHeaderTwoXML CHARACTER;
+			-- DECLARE reqLenOne,reqLenTwo,resLenOne, resLenTwo INTEGER;
+			-- DECLARE response22,ThirdPartyBillPaymentheader,ThirdPartyBillPaymentExtensionheader CHARACTER;
+			-- DECLARE resHeaderOneXML,resHeaderTwoXML,resHeaderOneChar,resHeaderTwoChar CHARACTER;
+			SET response22 = Environment.XMLNSC.ISO8583_1987.ReservedPrivate_127.ReservedPrivate_127_22;
+			CALL FindingRequestHeadersLength(response22,reqLenOne,reqLenTwo,ThirdPartyBillPaymentheader,ThirdPartyBillPaymentExtensionheader,reqHeaderOneXML,reqHeaderTwoXML);
+			CALL AddingResponseTags(response22,envref);
+			CALL FindingResponseTagsLength(response22,ThirdPartyBillPaymentheader,ThirdPartyBillPaymentExtensionheader,reqLenOne,reqLenTwo,resLenOne,resLenTwo,resHeaderOneXML,resHeaderTwoXML,resHeaderOneChar,resHeaderTwoChar);
+			SET response22 = resHeaderOneChar||resHeaderTwoChar||SUBSTRING(response22 AFTER '</ThirdPartyBillPaymentExtension>');
+			/*Adding total response22 to DFDL*/
+			SET Environment.XMLNSC.ISO8583_1987.ReservedPrivate_127.ReservedPrivate_127_22 VALUE = NULL ;
+			SET Environment.XMLNSC.ISO8583_1987.ReservedPrivate_127.ReservedPrivate_127_22 VALUE = response22;
+			--CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' total response 127-22subfield::'||Environment.XMLNSC.ISO8583_1987.ReservedPrivate_127.ReservedPrivate_127_22) INTO rc;
+		ELSEIF EXISTS(InputExceptionList.*[]) OR EXISTS(InputRoot.BLOB.*[]) OR InputRoot.HTTPResponseHeader."X-Original-HTTP-Status-Code" <> '200' THEN
+			DECLARE httpresblob,serviceUrl CHARACTER;
+			SET serviceUrl = SUBSTRING(InputLocalEnvironment.Destination.HTTP.RequestURL AFTER '/');
+			SET Environment.XMLNSC.ISO8583_1987.MTI_MessageFunction = '1';
+			DECLARE EnvRef REFERENCE To Environment;
+			SET exceptionDescription = getExceptionDesc(InputRoot,OutputRoot,InputExceptionList,EnvRef);
+			SET socketError = SUBSTRING(exceptionDescription BEFORE ': com.gtbank.ISO.ISO8583Message.HTTP');
+			CREATE NEXTSIBLING OF Environment.XMLNSC.ISO8583_1987.RetrievalReferenceNumber_037 NAME 'ResponseCode_039' ;
+			IF socketError = 'SocketTimeoutException' THEN
+				SET Environment.XMLNSC.ISO8583_1987.ResponseCode_039 = '91';
+				CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' SocketTimeoutException ::'|| COALESCE(Environment.XMLNSC.ISO8583_1987.ResponseCode_039,'') ) INTO rc;
+			ELSEIF socketError = 'SocketException' THEN
+				SET Environment.XMLNSC.ISO8583_1987.ResponseCode_039 = '06';
+				CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' SocketException ::'|| COALESCE(Environment.XMLNSC.ISO8583_1987.ResponseCode_039,'') ) INTO rc;
+			ELSEIF EXISTS(InputRoot.BLOB.*[]) THEN --From Error Terminal
+				SET httpresblob = CAST(InputRoot.BLOB.BLOB AS CHARACTER CCSID 1208);
+				SET Environment.httpresblob = SUBSTRING(SUBSTRING(httpresblob AFTER '<p>')BEFORE '</p>');
+				CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' ServiceErrorTerminal :: '|| COALESCE(Environment.httpresblob,'') ) INTO rc;
+				SET Environment.XMLNSC.ISO8583_1987.ResponseCode_039 = '06';
+			ELSE
+				CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' ServiceExceptionTerminal ::'|| COALESCE(exceptionDescription,'') ) INTO rc;
+				SET Environment.XMLNSC.ISO8583_1987.ResponseCode_039 = '06';
+			END IF;
+			SET Environment.XMLNSC.ISO8583_1987.PrimaryBitmap.Bit039 = 1;
+			------------------------------------------------------------------------
+			/* Operation is UnsuccessFul due to Sarvice Unavailable */
+			SET envref.description = 'Operation Unsuccessfull';
+			SET response22 = Environment.XMLNSC.ISO8583_1987.ReservedPrivate_127.ReservedPrivate_127_22;
+			CALL FindingRequestHeadersLength(response22,reqLenOne,reqLenTwo,ThirdPartyBillPaymentheader,ThirdPartyBillPaymentExtensionheader,reqHeaderOneXML,reqHeaderTwoXML);
+			CALL AddingResponseTags(response22,envref);
+			CALL FindingResponseTagsLength(response22,ThirdPartyBillPaymentheader,ThirdPartyBillPaymentExtensionheader,reqLenOne,reqLenTwo,resLenOne,resLenTwo,resHeaderOneXML,resHeaderTwoXML,resHeaderOneChar,resHeaderTwoChar);
+			SET response22 = resHeaderOneChar||resHeaderTwoChar||SUBSTRING(response22 AFTER '</ThirdPartyBillPaymentExtension>');
+
+			SET Environment.XMLNSC.ISO8583_1987.ReservedPrivate_127.ReservedPrivate_127_22 VALUE = NULL ;
+			SET Environment.XMLNSC.ISO8583_1987.ReservedPrivate_127.ReservedPrivate_127_22 VALUE = response22;
+			-----------------------------------------------------------------------------
+			/* Sending Email If the service is unavailable */
+			IF EMAIL_ALERT = 'Y' THEN
+				DECLARE Headref,bodyref,OutRef,rootTagRef REFERENCE TO OutputRoot;
+				CREATE LASTCHILD OF OutRef as OutRef DOMAIN 'XMLNSC';
+				CREATE LASTCHILD OF OutRef AS rootTagRef NAME 'EmailConfiguration';
+				CREATE LASTCHILD OF rootTagRef AS Headref NAME 'header';
+				CREATE LASTCHILD OF rootTagRef AS bodyref NAME 'body';
+				-- SET envref = Environment.Variables.TraceFileExc.FlowName;
+				SET Headref.messageID=COALESCE(Environment.messageId,'');
+				SET Headref.systemCode=COALESCE(Environment.systemCode,'');
+				SET Headref.creationDate=COALESCE(Environment.creationDate,'');
+				SET bodyref.ReferenceNumber='1234';
+				SET bodyref.ToEmail=ToEmail;
+				SET bodyref.CcEmail=CcEmail;
+				SET bodyref.Subject='Operation Unsuccessful';
+				SET bodyref.Body='ExceptionOccured due to service unavailable:'||ApplicationLabel||' for the messageId::'||COALESCE(Environment.messageId,'')||'  and description is: '||COALESCE(Environment.httpresblob,COALESCE(exceptionDescription,''));
+				CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' Sending mail Notification for service unavailable ::'||COALESCE(serviceUrl,'') ) INTO rc;
+				SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = EMAIL_QUEUE ;
+				PROPAGATE TO TERMINAL 'out1';
+			END IF;
+			/* ISO 0120&0121 requests handling by changing MTI Type 0130*/--0132
+		ELSEIF Environment.MTIType = '0120' OR Environment.MTIType = '0121' THEN
+			SET Environment.XMLNSC.ISO8583_1987.MTI_Version = '0';
+			SET Environment.XMLNSC.ISO8583_1987.MTI_MessageClass ='1';
+			SET Environment.XMLNSC.ISO8583_1987.MTI_MessageFunction='3';
+			SET Environment.XMLNSC.ISO8583_1987.MTI_MessageOrigin='0';
+			CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' An Invalid ISOMessage Received with '||COALESCE(Environment.MTIType,'') ) INTO rc;
+		/* ISO 0120&0121 requests handling by changing MTI Type 0130*/--0132
+		ELSEIF  Environment.MTIType = '0122' OR Environment.MTIType = '0123' THEN
+			SET Environment.XMLNSC.ISO8583_1987.MTI_Version = '0';
+			SET Environment.XMLNSC.ISO8583_1987.MTI_MessageClass ='1';
+			SET Environment.XMLNSC.ISO8583_1987.MTI_MessageFunction='3';
+			SET Environment.XMLNSC.ISO8583_1987.MTI_MessageOrigin='2';
+			CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' An Invalid ISOMessage Received with '||COALESCE(Environment.MTIType,'') ) INTO rc;	
+			/* ISO 0420&0421 requests handling by changing MTI Type 0430*/
+		ELSEIF Environment.MTIType = '0420' OR Environment.MTIType = '0421' THEN
+			SET Environment.XMLNSC.ISO8583_1987.MTI_Version = '0';
+			SET Environment.XMLNSC.ISO8583_1987.MTI_MessageClass ='4';
+			SET Environment.XMLNSC.ISO8583_1987.MTI_MessageFunction='3';
+			SET Environment.XMLNSC.ISO8583_1987.MTI_MessageOrigin='0';
+			CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' An Invalid ISOMessage Received with'||Environment.MTIType ) INTO rc;
+			/* ISO 0422&0423 requests handling by changing MTI Type 0432*/
+		ELSEIF Environment.MTIType = '0422' OR Environment.MTIType = '0423' THEN
+			SET Environment.XMLNSC.ISO8583_1987.MTI_Version = '0';
+			SET Environment.XMLNSC.ISO8583_1987.MTI_MessageClass ='4';
+			SET Environment.XMLNSC.ISO8583_1987.MTI_MessageFunction='3';
+			SET Environment.XMLNSC.ISO8583_1987.MTI_MessageOrigin='2';
+			CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' An Invalid ISOMessage Received with '||COALESCE(Environment.MTIType,'') ) INTO rc;
+
+		ELSEIF Environment.MTIType = '0320' THEN
+			SET Environment.XMLNSC.ISO8583_1987.MTI_Version = '0';
+			SET Environment.XMLNSC.ISO8583_1987.MTI_MessageClass ='3';
+			SET Environment.XMLNSC.ISO8583_1987.MTI_MessageFunction='3';
+			SET Environment.XMLNSC.ISO8583_1987.MTI_MessageOrigin='0';
+			CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' An Invalid ISOMessage Received with '||COALESCE(Environment.MTIType,'') ) INTO rc;
+			--ELSE
+			--SET Environment.XMLNSC.ISO8583_1987.MTI_Version = '0';
+			--SET Environment.XMLNSC.ISO8583_1987.MTI_MessageClass ='3';
+			--SET Environment.XMLNSC.ISO8583_1987.MTI_MessageFunction='3';
+			--SET Environment.XMLNSC.ISO8583_1987.MTI_MessageOrigin='0';
+			--CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' An Invalid ISOMessage Received with '||COALESCE(Environment.MTIType,'') ) INTO rc;
+
+		END IF;
+
+		CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' ISO39 field-response code::'|| Environment.XMLNSC.ISO8583_1987.ResponseCode_039 ) INTO rc;
+		DECLARE version,messageclass,messagefunction,messageorigin CHARACTER;
+		SET version = Environment.XMLNSC.ISO8583_1987.MTI_Version;
+		SET messageclass = Environment.XMLNSC.ISO8583_1987.MTI_MessageClass;
+		SET messagefunction = Environment.XMLNSC.ISO8583_1987.MTI_MessageFunction;
+		SET messageorigin = Environment.XMLNSC.ISO8583_1987.MTI_MessageOrigin;
+		DECLARE MTIType CHARACTER version||messageclass||messagefunction||messageorigin;
+		CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' responseMTIType logging::'|| MTIType ) INTO rc;
+		
+		/*ISO ResponseXml Logging into RAW_AUDIT_Q*/
+		SET OutputRoot.XMLNSC = Environment.XMLNSC;
+		DECLARE outputChar CHARACTER CAST(ASBITSTREAM(OutputRoot.XMLNSC) AS CHAR CCSID 1208);
+		SET OutputRoot.XMLNSC = NULL;
+		IF OUT_DB_LOG = 'Y' THEN
+			DECLARE messageId CHARACTER Environment.messageId;
+			DECLARE outRef REFERENCE TO OutputRoot;
+			CALL GenerateRawLogMsg(ApplicationLabel,outputChar,messageId,'ISO8583','Response',outRef);
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'RAW_AUDIT_Q' ;
+			PROPAGATE TO TERMINAL 'out1' ;
+		END IF ;
+		
+		/*Building Response ISO Message And Logging in FILE*/
+		SET OutputRoot.Properties = Environment.Properties;
+		SET OutputRoot.Properties.MessageType = '{}:ISO8583_1987';
+		CREATE LASTCHILD OF OutputRoot DOMAIN('DFDL');
+		SET OutputRoot.DFDL = Environment.XMLNSC;
+		SET Environment.XMLNSC = NULL;
+		
+		/*Adding length to Response ISO*/
+		DECLARE lenISO BLOB;
+		DECLARE responseMsgLength INTEGER;
+		DECLARE outputData CHARACTER CAST(ASBITSTREAM(OutputRoot.DFDL,437) AS CHARACTER CCSID 437);
+		CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId || ' responseMessage character sent to ATM ::'|| COALESCE(outputData,'') ) INTO rc;
+		SET lenISO = ASBITSTREAM(OutputRoot.DFDL,437);
+		SET OutputRoot.DFDL = NULL;
+		SET responseMsgLength = LENGTH(lenISO);
+		DECLARE FixedLengthblob BLOB responseMsgLength;
+		DECLARE aaa CHARACTER FixedLengthblob;
+		SET aaa = REPLACE(aaa,'00','');
+		SET OutputLocalEnvironment.Destination.TCPIP.Output.Id = Environment.connectionId;
+		CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' sendingResponseTo this connection ::'|| COALESCE(OutputLocalEnvironment.Destination.TCPIP.Output.Id,'') ) INTO rc;
+		SET OutputRoot.BLOB.BLOB = CAST(aaa AS BLOB)|| lenISO;
+		DECLARE inputCharblob BLOB OutputRoot.BLOB.BLOB;
+		DECLARE resFixedLengthblob BLOB CAST(aaa AS BLOB); --0896
+		CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId|| ' Responselength ::'|| CAST(COALESCE(resFixedLengthblob,'') AS CHARACTER)||' Responselength ::'|| CAST(responseMsgLength AS CHARACTER) ) INTO rc;
+		--CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId || ' responseMessage BLOB sent to ATM ::'|| CAST(inputCharblob AS CHARACTER) ) INTO rc;
+		CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO',Environment.messageId || ' ------END------' ) INTO rc;
+		RETURN TRUE;
+	END;
+END MODULE;
+
+CREATE PROCEDURE FindingRequestHeadersLength(INOUT response22 CHARACTER,INOUT reqLenOne INTEGER,INOUT reqLenTwo INTEGER,INOUT ThirdPartyBillPaymentheader CHARACTER,INOUT ThirdPartyBillPaymentExtensionheader CHARACTER,INOUT reqHeaderOneXML CHARACTER,INOUT reqHeaderTwoXML CHARACTER )
+BEGIN
+	SET ThirdPartyBillPaymentheader = SUBSTRING(response22 BEFORE '<ThirdPartyBillPayment>');
+	SET ThirdPartyBillPaymentExtensionheader = SUBSTRING(SUBSTRING(response22 BEFORE '<ThirdPartyBillPaymentExtension>')AFTER '</ThirdPartyBillPayment>');
+
+	SET reqHeaderOneXML = SUBSTRING(response22 FROM POSITION('<ThirdPartyBillPayment>' IN response22));
+	SET reqHeaderOneXML = SUBSTRING(reqHeaderOneXML FROM 1 FOR POSITION('</ThirdPartyBillPayment>' IN reqHeaderOneXML)-1)||'</ThirdPartyBillPayment>';
+	SET reqLenOne = LENGTH(reqHeaderOneXML);
+
+	SET reqHeaderTwoXML = SUBSTRING(response22 FROM POSITION('<ThirdPartyBillPaymentExtension>' IN response22));
+	SET reqHeaderTwoXML = SUBSTRING(reqHeaderTwoXML FROM 1 FOR POSITION('</ThirdPartyBillPaymentExtension>' IN reqHeaderTwoXML)-1)||'</ThirdPartyBillPaymentExtension>';
+	SET reqLenTwo = LENGTH(reqHeaderTwoXML);
+END;
+/*Below Procedures are used to Add Response Tags to the ISO 127-22Subfield*/
+CREATE PROCEDURE AddingResponseTags(INOUT response22 CHARACTER,INOUT envref REFERENCE)
+BEGIN
+	SET response22 = SUBSTRING(response22 BEFORE '<ThirdPartyBillPayment>')||
+	'<ThirdPartyBillPayment><BillPaymentResponse><AmountDue>'||CAST(COALESCE(envref.Amount,'')AS CHARACTER)||
+	'</AmountDue>'||'<AccountNumber>'||COALESCE(envref.BufferC,'')||'</AccountNumber>'||'<AdditionalData>'||COALESCE(envref.accountName,'')||'</AdditionalData><ReferenceId>'||COALESCE(envref.BufferC,'')||
+	'</ReferenceId></BillPaymentResponse></ThirdPartyBillPayment>'||
+	SUBSTRING(response22 AFTER '</ThirdPartyBillPayment>');
+	--CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO','response22 changing first header::'||COALESCE(response22,'')) INTO rc;
+
+	SET response22 = SUBSTRING(response22 BEFORE '<ThirdPartyBillPaymentExtension>')||
+	'<ThirdPartyBillPaymentExtension><BillPaymentResponseExtension><ItemDescription>'||COALESCE(envref.description,'')||
+	'</ItemDescription>'||'<CustomerDescription>'||COALESCE(envref.accountName,'')||'</CustomerDescription>'||
+	'<CustomerId>'||COALESCE(envref.BufferC,'')||'</CustomerId>'||'<ProductCode>'||COALESCE(envref.ProductCode,'')||
+	'</ProductCode></BillPaymentResponseExtension></ThirdPartyBillPaymentExtension>'||
+	SUBSTRING(response22 AFTER '</ThirdPartyBillPaymentExtension>');
+	--CALL writeToLogFile(MessageFlowLabel,LOG4JNAME||'_INFO','INFO','response22 changing second header::'||COALESCE(response22,'')) INTO rc;
+END;
+CREATE PROCEDURE FindingResponseTagsLength (INOUT response22 CHARACTER,IN ThirdPartyBillPaymentheader CHARACTER,IN ThirdPartyBillPaymentExtensionheader CHARACTER,IN reqLenOne INTEGER,IN reqLenTwo INTEGER,INOUT resLenOne INTEGER,INOUT resLenTwo INTEGER,INOUT resHeaderOneXML CHARACTER,INOUT resHeaderTwoXML CHARACTER,INOUT resHeaderOneChar CHARACTER,INOUT resHeaderTwoChar CHARACTER )
+BEGIN
+	SET resHeaderOneXML = SUBSTRING(response22 FROM POSITION('<ThirdPartyBillPayment>' IN response22));
+	SET resHeaderOneXML = SUBSTRING(resHeaderOneXML FROM 1 FOR POSITION('</ThirdPartyBillPayment>' IN resHeaderOneXML)-1)||'</ThirdPartyBillPayment>'; --||
+	SET resLenOne = LENGTH(resHeaderOneXML);
+	SET resHeaderOneChar = SUBSTRING(ThirdPartyBillPaymentheader BEFORE CAST(reqLenOne as CHARACTER))||
+	CAST(resLenOne AS CHARACTER)||resHeaderOneXML;
+
+	SET resHeaderTwoXML = SUBSTRING(response22 FROM POSITION('<ThirdPartyBillPaymentExtension>' IN response22));
+	SET resHeaderTwoXML = SUBSTRING(resHeaderTwoXML FROM 1 FOR POSITION('</ThirdPartyBillPaymentExtension>' IN resHeaderTwoXML)-1)||'</ThirdPartyBillPaymentExtension>'; --||
+	SET resLenTwo = LENGTH(resHeaderTwoXML);
+	SET resHeaderTwoChar = SUBSTRING(ThirdPartyBillPaymentExtensionheader BEFORE CAST(reqLenTwo as CHARACTER))||
+	CAST(resLenTwo AS CHARACTER)||resHeaderTwoXML;
+END;
